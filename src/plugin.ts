@@ -66,7 +66,7 @@ export function createRelayPlugin(): OpenACPPlugin {
 
   return {
     name: "@hahnfeld/msrelay-provider",
-    version: "0.1.2",
+    version: "0.1.3",
     description: "Azure Relay Hybrid Connections tunnel provider — private HTTP tunneling via Azure backbone",
     essential: false,
     permissions: [
