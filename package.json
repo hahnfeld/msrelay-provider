@@ -1,6 +1,6 @@
 {
   "name": "@hahnfeld/msrelay-provider",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Azure Relay Hybrid Connections tunnel provider plugin for OpenACP",
   "type": "module",
   "main": "dist/index.js",
