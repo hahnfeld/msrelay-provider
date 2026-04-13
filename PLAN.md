@@ -38,7 +38,7 @@ Follow these exactly (from CONTRIBUTING.md and the plugin template scaffold):
 
 ### Package Structure
 ```
-msrelay-connector/
+msrelay-provider/
 ├── package.json
 ├── tsconfig.json
 ├── src/
@@ -55,16 +55,16 @@ msrelay-connector/
 
 ### Naming & Distribution
 
-- **Package name:** `@hahnfeld/msrelay-connector`
+- **Package name:** `@hahnfeld/msrelay-provider`
 - **npm:** Published to npmjs.org under the `@hahnfeld` scope (public access), same as `@hahnfeld/devtunnel-provider`
-- **GitHub:** `github.com/hahnfeld/msrelay-connector` — same org/user as the devtunnel-provider repo
+- **GitHub:** `github.com/hahnfeld/msrelay-provider` — same org/user as the devtunnel-provider repo
 - **Author:** Matt Hahnfeld
 - **License:** MIT
 
 ### package.json Shape
 ```json
 {
-  "name": "@hahnfeld/msrelay-connector",
+  "name": "@hahnfeld/msrelay-provider",
   "version": "0.1.0",
   "description": "Azure Relay Hybrid Connections provider plugin for OpenACP",
   "type": "module",
@@ -81,11 +81,11 @@ msrelay-connector/
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hahnfeld/msrelay-connector.git"
+    "url": "git+https://github.com/hahnfeld/msrelay-provider.git"
   },
-  "homepage": "https://github.com/hahnfeld/msrelay-connector#readme",
+  "homepage": "https://github.com/hahnfeld/msrelay-provider#readme",
   "bugs": {
-    "url": "https://github.com/hahnfeld/msrelay-connector/issues"
+    "url": "https://github.com/hahnfeld/msrelay-provider/issues"
   },
   "engines": {
     "openacp": ">=2026.0.0"

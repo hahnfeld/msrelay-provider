@@ -65,7 +65,7 @@ export function createRelayPlugin(): OpenACPPlugin {
   let provider: AzureRelayProvider | null = null;
 
   return {
-    name: "@hahnfeld/msrelay-connector",
+    name: "@hahnfeld/msrelay-provider",
     version: "0.1.0",
     description: "Azure Relay Hybrid Connections tunnel provider — private HTTP tunneling via Azure backbone",
     essential: false,
@@ -149,7 +149,7 @@ export function createRelayPlugin(): OpenACPPlugin {
         "  3978  — Teams adapter (Microsoft Bot Framework default)\n" +
         "  21420 — OpenACP API server\n" +
         "\n" +
-        "You can change this later with: openacp plugin configure @hahnfeld/msrelay-connector",
+        "You can change this later with: openacp plugin configure @hahnfeld/msrelay-provider",
         "Port Selection",
       );
 
@@ -367,7 +367,7 @@ export function createRelayPlugin(): OpenACPPlugin {
       ctx.log.info(`Migrating from v${oldVersion}`);
       const parsed = AzureRelayConfigSchema.safeParse(oldSettings);
       if (!parsed.success) {
-        ctx.log.warn(`Migrated config is invalid — user should re-run: openacp plugin configure @hahnfeld/msrelay-connector`);
+        ctx.log.warn(`Migrated config is invalid — user should re-run: openacp plugin configure @hahnfeld/msrelay-provider`);
       }
       return oldSettings;
     },
@@ -387,7 +387,7 @@ export function createRelayPlugin(): OpenACPPlugin {
       const raw = ctx.pluginConfig as unknown;
       const parsed = AzureRelayConfigSchema.safeParse(raw);
       if (!parsed.success) {
-        ctx.log.warn(`Azure Relay config invalid: ${parsed.error.message}. Run: openacp plugin configure @hahnfeld/msrelay-connector`);
+        ctx.log.warn(`Azure Relay config invalid: ${parsed.error.message}. Run: openacp plugin configure @hahnfeld/msrelay-provider`);
         return;
       }
 
@@ -406,7 +406,7 @@ export function createRelayPlugin(): OpenACPPlugin {
 
       provider.onExit(() => {
         ctx.log.warn("Azure Relay WebSocket disconnected unexpectedly — TunnelRegistry will retry");
-        ctx.emit("msrelay-connector:disconnected", {});
+        ctx.emit("msrelay-provider:disconnected", {});
         provider = null;
       });
 
@@ -417,7 +417,7 @@ export function createRelayPlugin(): OpenACPPlugin {
         try {
           const publicUrl = await provider!.start(port);
           ctx.log.info(`Azure Relay ready: ${publicUrl}`);
-          ctx.emit("msrelay-connector:started", { publicUrl, port });
+          ctx.emit("msrelay-provider:started", { publicUrl, port });
         } catch (err) {
           ctx.log.error(`Azure Relay failed to start: ${(err as Error).message}`);
         }

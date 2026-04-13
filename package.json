@@ -1,5 +1,5 @@
 {
-  "name": "@hahnfeld/msrelay-connector",
+  "name": "@hahnfeld/msrelay-provider",
   "version": "0.1.0",
   "description": "Azure Relay Hybrid Connections tunnel provider plugin for OpenACP",
   "type": "module",
@@ -31,11 +31,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hahnfeld/msrelay-connector.git"
+    "url": "git+https://github.com/hahnfeld/msrelay-provider.git"
   },
-  "homepage": "https://github.com/hahnfeld/msrelay-connector#readme",
+  "homepage": "https://github.com/hahnfeld/msrelay-provider#readme",
   "bugs": {
-    "url": "https://github.com/hahnfeld/msrelay-connector/issues"
+    "url": "https://github.com/hahnfeld/msrelay-provider/issues"
   },
   "engines": {
     "openacp": ">=2026.0.0"

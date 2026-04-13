@@ -135,7 +135,7 @@ describe("createRelayPlugin", () => {
   describe("metadata", () => {
     it("has correct name and version", () => {
       const plugin = createRelayPlugin();
-      expect(plugin.name).toBe("@hahnfeld/msrelay-connector");
+      expect(plugin.name).toBe("@hahnfeld/msrelay-provider");
       expect(plugin.version).toBe("0.1.0");
     });
 
@@ -230,7 +230,7 @@ describe("createRelayPlugin", () => {
         expect.stringContaining("Azure Relay ready"),
       );
       expect(ctx.emit).toHaveBeenCalledWith(
-        "msrelay-connector:started",
+        "msrelay-provider:started",
         expect.objectContaining({ publicUrl: expect.stringContaining("myrelay") }),
       );
     });

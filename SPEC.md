@@ -1,4 +1,4 @@
-# Technical Specification: @hahnfeld/msrelay-connector
+# Technical Specification: @hahnfeld/msrelay-provider
 
 **Version:** 0.1.0
 **Date:** 2026-04-13
@@ -33,7 +33,7 @@ Public tunnel providers (Dev Tunnels, ngrok, Cloudflare Tunnel) create internet-
 
 ### Solution
 
-`@hahnfeld/msrelay-connector` is a general-purpose OpenACP tunnel provider plugin that routes HTTP traffic through Azure Relay Hybrid Connections. Azure Relay operates on Microsoft's private backbone, reachable via ExpressRoute or VPN. No inbound connections are required: the local machine opens an outbound WebSocket to the Azure Relay service, and all HTTP requests are forwarded through this private channel to a local port.
+`@hahnfeld/msrelay-provider` is a general-purpose OpenACP tunnel provider plugin that routes HTTP traffic through Azure Relay Hybrid Connections. Azure Relay operates on Microsoft's private backbone, reachable via ExpressRoute or VPN. No inbound connections are required: the local machine opens an outbound WebSocket to the Azure Relay service, and all HTTP requests are forwarded through this private channel to a local port.
 
 This plugin is a drop-in replacement for `@hahnfeld/devtunnel-provider` and other OpenACP tunnel providers. It implements the standard `TunnelProvider` interface and follows identical OpenACP plugin conventions, allowing operators to swap providers without changes to other plugins or adapters. It works with any HTTP caller — Bot Framework, webhook services (Slack, GitHub, Stripe), REST API clients, or custom integrations.
 
@@ -93,7 +93,7 @@ This plugin provides a tunnel — it makes a local port reachable via a stable H
 
 | Field | Value |
 |-------|-------|
-| Package name | `@hahnfeld/msrelay-connector` |
+| Package name | `@hahnfeld/msrelay-provider` |
 | Registry | npmjs.org (public access, `@hahnfeld` scope) |
 | License | MIT |
 | Module system | ESM (`"type": "module"`) |
@@ -469,14 +469,14 @@ The listener (this plugin) authenticates to the Azure Relay service using a SAS 
 
 ### SAS Key Rotation
 
-When IT rotates the SAS key, the plugin must be reconfigured via `openacp plugin configure @hahnfeld/msrelay-connector` and restarted. The `hyco-https` token factory generates short-lived tokens from the key, so key rotation does not require Relay-level changes.
+When IT rotates the SAS key, the plugin must be reconfigured via `openacp plugin configure @hahnfeld/msrelay-provider` and restarted. The `hyco-https` token factory generates short-lived tokens from the key, so key rotation does not require Relay-level changes.
 
 ---
 
 ## 10. File Structure
 
 ```
-msrelay-connector/
+msrelay-provider/
   package.json
   tsconfig.json
   SPEC.md

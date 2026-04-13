@@ -1,4 +1,4 @@
-# @hahnfeld/msrelay-connector
+# @hahnfeld/msrelay-provider
 
 Azure Relay Hybrid Connections tunnel provider plugin for [OpenACP](https://github.com/Open-ACP/openacp). Exposes local HTTP services through Azure's private backbone — no public internet exposure, no inbound ports.
 
@@ -42,7 +42,7 @@ This plugin provides a tunnel — it makes a local port reachable via a stable H
 ## Install
 
 ```bash
-openacp plugin install @hahnfeld/msrelay-connector
+openacp plugin install @hahnfeld/msrelay-provider
 ```
 
 The install wizard prompts for:
@@ -96,7 +96,7 @@ Point your external callers (Bot Framework messaging endpoint, webhook URLs, etc
 After install, reconfigure any setting:
 
 ```bash
-openacp plugin configure @hahnfeld/msrelay-connector
+openacp plugin configure @hahnfeld/msrelay-provider
 ```
 
 | Setting | Description | Default |
