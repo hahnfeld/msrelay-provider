@@ -61,15 +61,13 @@ Before installing the plugin, provision these Azure resources:
 az relay namespace create \
   --resource-group <rg> --name <namespace> --location westus2
 
-# 2. Create Hybrid Connection
+# 2. Create Hybrid Connection with client authorization disabled
+#    (required if callers can't send SAS headers — Bot Framework, webhooks, etc.)
+#    NOTE: --requires-client-authorization cannot be changed after creation.
+#    If you need to change it, delete and recreate the Hybrid Connection.
 az relay hyco create \
-  --resource-group <rg> --namespace-name <namespace> --name my-connection
-
-# 3. Disable client authorization (required if callers can't send SAS headers —
-#    e.g., Bot Framework, external webhooks, third-party services)
-az relay hyco update \
-  --resource-group <rg> --namespace-name <namespace> \
-  --name my-connection --requires-client-authorization false
+  --resource-group <rg> --namespace-name <namespace> --name my-connection \
+  --requires-client-authorization false
 
 # 4. Create listen-only SAS policy (least privilege)
 az relay hyco authorization-rule create \

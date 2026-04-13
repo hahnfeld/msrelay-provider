@@ -212,19 +212,18 @@ export class AzureRelayProvider {
         }
       });
 
-      server.listen((err?: Error) => {
+      // hyco-https listen() takes no arguments — readiness is signaled
+      // via the 'listening' event when the control channel WebSocket opens.
+      server.on("listening", () => {
         clearTimeout(timeout);
-        if (err) {
-          this.server = null;
-          settle(() => reject(new Error(`Azure Relay listen failed: ${err.message}`)));
-          return;
-        }
         this.publicUrl = `https://${relayNamespace}/${hybridConnectionName}`;
         if (!this.metrics.startedAt) {
           this.metrics.startedAt = new Date();
         }
         settle(() => resolve(this.publicUrl));
       });
+
+      server.listen();
     });
   }
 

@@ -10,7 +10,7 @@ declare module "hyco-https" {
   type RequestListener = (req: IncomingMessage, res: ServerResponse) => void;
 
   interface RelayedServer extends EventEmitter {
-    listen(callback?: (err?: Error) => void): void;
+    listen(): void;
     close(callback?: () => void): void;
   }
 

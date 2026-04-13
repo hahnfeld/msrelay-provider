@@ -11,8 +11,9 @@ let capturedRequestHandler: ((req: IncomingMessage, res: ServerResponse) => void
 class MockRelayedServer extends EventEmitter {
   closed = false;
 
-  listen(callback?: (err?: Error) => void): void {
-    if (callback) process.nextTick(() => callback());
+  listen(): void {
+    // Match real hyco-https: readiness is signaled via 'listening' event
+    process.nextTick(() => this.emit("listening"));
   }
 
   close(callback?: () => void): void {
@@ -308,7 +309,7 @@ describe("AzureRelayProvider", () => {
     mockHycoHttps.createRelayedServer = (_opts: unknown, listener: unknown) => {
       mockServer = new MockRelayedServer();
       mockServer.listen = () => {
-        // Don't call callback — simulate hang, then emit error
+        // Simulate connection error instead of emitting 'listening'
         process.nextTick(() => mockServer.emit("error", new Error("Connection refused")));
       };
       capturedRequestHandler = listener as typeof capturedRequestHandler;
@@ -457,7 +458,7 @@ describe("AzureRelayProvider", () => {
         callCount++;
         mockServer = new MockRelayedServer();
         if (callCount > 1) {
-          // All reconnect attempts fail
+          // All reconnect attempts fail — emit error instead of 'listening'
           mockServer.listen = () => {
             process.nextTick(() => mockServer.emit("error", new Error("Connection refused")));
           };

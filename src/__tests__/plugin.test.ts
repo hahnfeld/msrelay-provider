@@ -14,7 +14,7 @@ vi.mock("node:module", () => ({
         createRelayToken: () => "SharedAccessSignature mock",
         createRelayedServer: (_options: unknown, _listener: unknown) => {
           const server = new EventEmitter();
-          server.listen = (cb: (err?: Error) => void) => process.nextTick(() => cb());
+          server.listen = () => process.nextTick(() => server.emit("listening"));
           server.close = (cb?: () => void) => { if (cb) process.nextTick(cb); };
           return server;
         },
@@ -136,7 +136,7 @@ describe("createRelayPlugin", () => {
     it("has correct name and version", () => {
       const plugin = createRelayPlugin();
       expect(plugin.name).toBe("@hahnfeld/msrelay-provider");
-      expect(plugin.version).toBe("0.1.0");
+      expect(plugin.version).toBe("0.1.1");
     });
 
     it("declares required permissions", () => {
