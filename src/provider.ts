@@ -286,6 +286,13 @@ export class AzureRelayProvider {
       return;
     }
 
+    // Azure Relay prepends the Hybrid Connection name to the path.
+    // e.g., /bot-endpoint/api/messages → /api/messages
+    const prefix = `/${this.config.hybridConnectionName}`;
+    const forwardPath = rawUrl.startsWith(prefix)
+      ? (rawUrl.slice(prefix.length) || "/")
+      : rawUrl;
+
     const forwardHeaders = stripHopByHop(relayReq.headers);
     forwardHeaders["host"] = `localhost:${this.localPort}`;
 
@@ -293,7 +300,7 @@ export class AzureRelayProvider {
       {
         hostname: "localhost",
         port: this.localPort,
-        path: rawUrl,
+        path: forwardPath,
         method: relayReq.method,
         headers: forwardHeaders as Record<string, string>,
         timeout: LOCAL_FORWARD_TIMEOUT_MS,

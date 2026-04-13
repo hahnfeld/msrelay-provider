@@ -214,6 +214,64 @@ describe("AzureRelayProvider", () => {
     expect(fakeRes.writeHead).toHaveBeenCalledWith(200, mockLocalRes.headers);
   });
 
+  it("strips Hybrid Connection name prefix from forwarded path", async () => {
+    const { request: mockHttpRequest } = await import("node:http");
+    const provider = new AzureRelayProvider(TEST_CONFIG);
+    await provider.start(3978);
+
+    const fakeReq = Object.assign(new EventEmitter(), {
+      method: "POST",
+      url: "/bot-endpoint/api/messages",
+      headers: { "content-type": "application/json" },
+      pipe: vi.fn(),
+      unpipe: vi.fn(),
+    }) as unknown as IncomingMessage;
+
+    const fakeRes = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+      headersSent: false,
+    } as unknown as ServerResponse;
+
+    capturedRequestHandler!(fakeReq, fakeRes);
+
+    expect(mockHttpRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/api/messages",
+      }),
+      expect.any(Function),
+    );
+  });
+
+  it("maps bare Hybrid Connection path to /", async () => {
+    const { request: mockHttpRequest } = await import("node:http");
+    const provider = new AzureRelayProvider(TEST_CONFIG);
+    await provider.start(3978);
+
+    const fakeReq = Object.assign(new EventEmitter(), {
+      method: "GET",
+      url: "/bot-endpoint",
+      headers: {},
+      pipe: vi.fn(),
+      unpipe: vi.fn(),
+    }) as unknown as IncomingMessage;
+
+    const fakeRes = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+      headersSent: false,
+    } as unknown as ServerResponse;
+
+    capturedRequestHandler!(fakeReq, fakeRes);
+
+    expect(mockHttpRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "/",
+      }),
+      expect.any(Function),
+    );
+  });
+
   it("returns 502 when local server is down", async () => {
     const provider = new AzureRelayProvider(TEST_CONFIG);
     await provider.start(3978);
