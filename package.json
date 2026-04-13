@@ -1,0 +1,64 @@
+{
+  "name": "@hahnfeld/msrelay-connector",
+  "version": "0.1.0",
+  "description": "Azure Relay Hybrid Connections tunnel provider plugin for OpenACP",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "openacp",
+    "openacp-plugin",
+    "azure-relay",
+    "hybrid-connections",
+    "tunnel",
+    "teams"
+  ],
+  "author": "Matt Hahnfeld",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hahnfeld/msrelay-connector.git"
+  },
+  "homepage": "https://github.com/hahnfeld/msrelay-connector#readme",
+  "bugs": {
+    "url": "https://github.com/hahnfeld/msrelay-connector/issues"
+  },
+  "engines": {
+    "openacp": ">=2026.0.0"
+  },
+  "peerDependencies": {
+    "@openacp/cli": ">=2026.0.0"
+  },
+  "dependencies": {
+    "hyco-https": "^1.4.5",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@openacp/plugin-sdk": "^2026.331.1",
+    "typescript": "^5.4.0",
+    "vitest": "^3.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "!dist/__tests__"
+  ],
+  "packageManager": "pnpm@9.15.0"
+}

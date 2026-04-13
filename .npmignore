@@ -1,0 +1,8 @@
+src/
+tsconfig.json
+.gitignore
+.claude/
+*.test.ts
+__tests__/
+PLAN.md
+SPEC.md
