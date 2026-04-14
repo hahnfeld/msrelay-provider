@@ -78,22 +78,40 @@ function createMockSetupContext(config: Partial<AzureRelayConfig> = VALID_CONFIG
   };
 }
 
-function createMockInstallContext(responses: Record<string, unknown> = {}) {
-  let responseIndex = 0;
+function createMockInstallContext(opts: {
+  textResponses?: string[];
+  passwordResponse?: string;
+  selectResponse?: string;
+  confirmResponse?: boolean;
+  existingConfig?: Partial<AzureRelayConfig>;
+} = {}) {
+  const {
+    textResponses = [
+      "myrelay.servicebus.windows.net",             // namespace
+      "bot-endpoint",                                // hybrid connection
+      "ListenOnly",                                  // SAS policy name
+    ],
+    passwordResponse = "dGVzdGtleQ==",
+    selectResponse = "3978",
+    confirmResponse = false,
+    existingConfig = {},
+  } = opts;
+
+  let textIndex = 0;
   const storedSettings: Record<string, unknown> = {};
 
   return {
     terminal: {
       note: vi.fn(),
       text: vi.fn(async () => {
-        const keys = Object.keys(responses);
-        if (responseIndex < keys.length) {
-          return responses[keys[responseIndex++]] as string;
+        if (textIndex < textResponses.length) {
+          return textResponses[textIndex++];
         }
         return "test-value";
       }),
-      select: vi.fn(async () => "3978"),
-      confirm: vi.fn(async () => false),
+      password: vi.fn(async () => passwordResponse),
+      select: vi.fn(async () => selectResponse),
+      confirm: vi.fn(async () => confirmResponse),
       spinner: vi.fn(() => ({
         start: vi.fn(),
         stop: vi.fn(),
@@ -104,6 +122,7 @@ function createMockInstallContext(responses: Record<string, unknown> = {}) {
         warn: vi.fn(),
         error: vi.fn(),
         success: vi.fn(),
+        step: vi.fn(),
       },
       cancel: vi.fn(),
     },
@@ -114,7 +133,7 @@ function createMockInstallContext(responses: Record<string, unknown> = {}) {
       set: vi.fn(async (key: string, value: unknown) => {
         storedSettings[key] = value;
       }),
-      getAll: vi.fn(async () => ({ ...VALID_CONFIG, ...storedSettings })),
+      getAll: vi.fn(async () => ({ ...existingConfig, ...storedSettings })),
       clear: vi.fn(),
     },
     _storedSettings: storedSettings,
@@ -272,6 +291,61 @@ describe("createRelayPlugin", () => {
       await plugin.uninstall!(ctx as never, { purge: false });
 
       expect(ctx.settings.clear).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("install", () => {
+    it("saves config from wizard inputs", async () => {
+      const plugin = createRelayPlugin();
+      const ctx = createMockInstallContext();
+      await plugin.install!(ctx as never);
+
+      expect(ctx.settings.setAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enabled: true,
+          port: 3978,
+          relayNamespace: "myrelay.servicebus.windows.net",
+          hybridConnectionName: "bot-endpoint",
+          sasKeyName: "ListenOnly",
+          sasKeyValue: "dGVzdGtleQ==",
+        }),
+      );
+    });
+
+    it("loads existing config for pre-filling on reinstall", async () => {
+      const plugin = createRelayPlugin();
+      const ctx = createMockInstallContext({
+        existingConfig: VALID_CONFIG,
+      });
+      await plugin.install!(ctx as never);
+
+      // settings.getAll should be called to load existing config
+      expect(ctx.settings.getAll).toHaveBeenCalled();
+    });
+
+    it("shows Azure CLI commands in notes", async () => {
+      const plugin = createRelayPlugin();
+      const ctx = createMockInstallContext();
+      await plugin.install!(ctx as never);
+
+      const noteCalls = ctx.terminal.note.mock.calls.map((c: unknown[]) => c[0] as string);
+      // Should show az relay namespace create command
+      expect(noteCalls.some((n: string) => n.includes("az relay namespace create"))).toBe(true);
+      // Should show az relay hyco create command
+      expect(noteCalls.some((n: string) => n.includes("az relay hyco create"))).toBe(true);
+      // Should show az relay hyco authorization-rule keys list command
+      expect(noteCalls.some((n: string) => n.includes("authorization-rule keys list"))).toBe(true);
+      // Should include <resource-group> placeholder in commands
+      expect(noteCalls.some((n: string) => n.includes("<resource-group>"))).toBe(true);
+    });
+
+    it("runs SAS token test when confirmed", async () => {
+      const plugin = createRelayPlugin();
+      const ctx = createMockInstallContext({ confirmResponse: true });
+      await plugin.install!(ctx as never);
+
+      const spinner = ctx.terminal.spinner.mock.results[0]?.value;
+      expect(spinner.start).toHaveBeenCalledWith("Connecting to Azure Relay...");
     });
   });
 

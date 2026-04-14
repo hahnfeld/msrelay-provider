@@ -45,46 +45,24 @@ This plugin provides a tunnel — it makes a local port reachable via a stable H
 openacp plugin install @hahnfeld/msrelay-provider
 ```
 
-The install wizard prompts for:
+The install wizard walks you through the full Azure setup — showing the `az` CLI commands for each step and prompting for the values. You'll need the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) installed.
 
-1. Azure Relay namespace (e.g., `myrelay.servicebus.windows.net`)
-2. Hybrid Connection name (e.g., `bot-endpoint`)
-3. SAS policy name and key (with `Listen` permission)
-4. Local port to forward to (3978 for Bot Framework, 21420 for OpenACP API server, or any custom port)
+The wizard covers:
 
-## Azure Setup
+1. Creating a Relay namespace
+2. Creating a Hybrid Connection (with client authorization disabled)
+3. Creating a listen-only SAS policy
+4. Retrieving the SAS key
+5. Choosing a local port to forward to
 
-Before installing the plugin, provision these Azure resources:
+On reinstall, existing values are pre-filled so you can press Enter to keep them. The SAS key is masked and can be kept without re-entering.
 
-```bash
-# 1. Create Relay namespace
-az relay namespace create \
-  --resource-group <rg> --name <namespace> --location westus2
+After setup, the wizard tests connectivity by opening a real WebSocket to Azure Relay.
 
-# 2. Create Hybrid Connection with client authorization disabled
-#    (required if callers can't send SAS headers — Bot Framework, webhooks, etc.)
-#    NOTE: --requires-client-authorization cannot be changed after creation.
-#    If you need to change it, delete and recreate the Hybrid Connection.
-az relay hyco create \
-  --resource-group <rg> --namespace-name <namespace> --name my-connection \
-  --requires-client-authorization false
-
-# 4. Create listen-only SAS policy (least privilege)
-az relay hyco authorization-rule create \
-  --resource-group <rg> --namespace-name <namespace> \
-  --hybrid-connection-name my-connection \
-  --name ListenOnly --rights Listen
-
-# 5. Retrieve the key
-az relay hyco authorization-rule keys list \
-  --resource-group <rg> --namespace-name <namespace> \
-  --hybrid-connection-name my-connection --name ListenOnly
-```
-
-The resulting endpoint URL is:
+The resulting public endpoint URL is:
 
 ```
-https://<namespace>.servicebus.windows.net/my-connection
+https://<namespace>.servicebus.windows.net/<connection>
 ```
 
 Point your external callers (Bot Framework messaging endpoint, webhook URLs, etc.) at this URL.
@@ -111,13 +89,13 @@ openacp plugin configure @hahnfeld/msrelay-provider
 | Command | Description |
 |---------|-------------|
 | `/relay` | Show connection status, uptime, request/error counts |
-| `/relay auth` | Validate SAS key by generating a test token |
+| `/relay auth` | Test connectivity by connecting to Azure Relay |
 
 ## Development
 
 ```bash
 pnpm install
-pnpm test          # Run tests (28 tests)
+pnpm test          # Run tests (42 tests)
 pnpm build         # Compile TypeScript
 pnpm dev           # Watch mode
 pnpm lint          # Type-check without emitting
