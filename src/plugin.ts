@@ -94,7 +94,7 @@ export function createRelayPlugin(): OpenACPPlugin {
 
   return {
     name: "@hahnfeld/msrelay-provider",
-    version: "0.1.3",
+    version: "0.1.4",
     description: "Azure Relay Hybrid Connections tunnel provider — private HTTP tunneling via Azure backbone",
     essential: false,
     permissions: [
@@ -325,8 +325,8 @@ export function createRelayPlugin(): OpenACPPlugin {
         `Port:       ${port}\n` +
         `Public URL: https://${ns}/${hc}\n` +
         "\n" +
-        "Point your Bot Framework messaging endpoint (or webhook URLs) at\n" +
-        "the public URL above.",
+        "For Azure Bot Framework, set your messaging endpoint to:\n" +
+        `  https://${ns}/${hc}/api/messages`,
         "Configuration Summary",
       );
     },
