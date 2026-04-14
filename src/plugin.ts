@@ -94,7 +94,7 @@ export function createRelayPlugin(): OpenACPPlugin {
 
   return {
     name: "@hahnfeld/msrelay-provider",
-    version: "0.1.6",
+    version: "0.1.7",
     description: "Azure Relay Hybrid Connections tunnel provider — private HTTP tunneling via Azure backbone",
     essential: false,
     permissions: [
@@ -127,22 +127,22 @@ export function createRelayPlugin(): OpenACPPlugin {
 
       const resourceGroup = await terminal.text({
         message: "Azure resource group:",
-        defaultValue: existing.resourceGroup ?? undefined,
+        initialValue: existing.resourceGroup ?? undefined,
         validate: (v) => {
           if (!v.trim()) return "Resource group is required";
           return undefined;
         },
-      });
+      } as Parameters<typeof terminal.text>[0]);
       const rg = resourceGroup.trim();
 
       const namespaceInput = await terminal.text({
         message: "Relay namespace name (becomes <name>.servicebus.windows.net):",
-        defaultValue: existing.relayNamespace?.replace(".servicebus.windows.net", "") ?? undefined,
+        initialValue: existing.relayNamespace?.replace(".servicebus.windows.net", "") ?? undefined,
         validate: (v) => {
           if (!v.trim()) return "Namespace is required";
           return undefined;
         },
-      });
+      } as Parameters<typeof terminal.text>[0]);
       const nsName = namespaceInput.trim().replace(".servicebus.windows.net", "");
       const ns = `${nsName}.servicebus.windows.net`;
       if (!isValidNamespace(ns)) {
@@ -151,24 +151,24 @@ export function createRelayPlugin(): OpenACPPlugin {
 
       const connectionName = await terminal.text({
         message: "Hybrid Connection name:",
-        defaultValue: existing.hybridConnectionName ?? `${nsName}-hybrid`,
+        initialValue: existing.hybridConnectionName ?? `${nsName}-hybrid`,
         validate: (v) => {
           const trimmed = v.trim();
           if (!trimmed) return "Connection name is required";
           if (!isValidConnectionName(trimmed)) return "Must be alphanumeric with dots/hyphens/underscores";
           return undefined;
         },
-      });
+      } as Parameters<typeof terminal.text>[0]);
       const hc = connectionName.trim();
 
       const keyName = await terminal.text({
         message: "SAS policy name (listen-only auth rule):",
-        defaultValue: existing.sasKeyName ?? `${nsName}-hybrid-policy`,
+        initialValue: existing.sasKeyName ?? `${nsName}-hybrid-policy`,
         validate: (v) => {
           if (!v.trim()) return "Policy name is required";
           return undefined;
         },
-      });
+      } as Parameters<typeof terminal.text>[0]);
       const sasName = keyName.trim();
 
       // ── Step 2: Show the public URL and exact az commands ──
@@ -233,7 +233,7 @@ export function createRelayPlugin(): OpenACPPlugin {
       if (portChoice === "custom") {
         const portStr = await terminal.text({
           message: "Local port to expose:",
-          defaultValue: existingPort ? String(existingPort) : undefined,
+          initialValue: existingPort ? String(existingPort) : undefined,
           validate: (v) => {
             const trimmed = v.trim();
             if (!trimmed) return "Port is required";
@@ -241,7 +241,7 @@ export function createRelayPlugin(): OpenACPPlugin {
             if (isNaN(n) || !Number.isInteger(n) || n < 1 || n > 65535) return "Port must be 1-65535";
             return undefined;
           },
-        });
+        } as Parameters<typeof terminal.text>[0]);
         port = Number(portStr.trim());
       } else {
         port = Number(portChoice);
@@ -320,14 +320,14 @@ export function createRelayPlugin(): OpenACPPlugin {
           case "namespace": {
             const val = await terminal.text({
               message: "Azure Relay namespace:",
-              defaultValue: (current.relayNamespace as string) ?? "",
+              initialValue: (current.relayNamespace as string) ?? "",
               validate: (v) => {
                 const trimmed = v.trim();
                 if (!trimmed) return "Required";
                 if (!isValidNamespace(trimmed)) return "Must be <name>.servicebus.windows.net";
                 return undefined;
               },
-            });
+            } as Parameters<typeof terminal.text>[0]);
             await settings.set("relayNamespace", val.trim());
             terminal.log.success(`Namespace set to ${val.trim()}`);
             break;
@@ -335,14 +335,14 @@ export function createRelayPlugin(): OpenACPPlugin {
           case "connection": {
             const val = await terminal.text({
               message: "Hybrid Connection name:",
-              defaultValue: (current.hybridConnectionName as string) ?? "",
+              initialValue: (current.hybridConnectionName as string) ?? "",
               validate: (v) => {
                 const trimmed = v.trim();
                 if (!trimmed) return "Required";
                 if (!isValidConnectionName(trimmed)) return "Invalid format";
                 return undefined;
               },
-            });
+            } as Parameters<typeof terminal.text>[0]);
             await settings.set("hybridConnectionName", val.trim());
             terminal.log.success(`Connection set to ${val.trim()}`);
             break;
@@ -350,12 +350,12 @@ export function createRelayPlugin(): OpenACPPlugin {
           case "sasKeyName": {
             const val = await terminal.text({
               message: "SAS policy name:",
-              defaultValue: (current.sasKeyName as string) ?? "ListenOnly",
+              initialValue: (current.sasKeyName as string) ?? "ListenOnly",
               validate: (v) => {
                 if (!v.trim()) return "Required";
                 return undefined;
               },
-            });
+            } as Parameters<typeof terminal.text>[0]);
             await settings.set("sasKeyName", val.trim());
             terminal.log.success(`SAS policy name set to ${val.trim()}`);
             break;
@@ -375,7 +375,7 @@ export function createRelayPlugin(): OpenACPPlugin {
           case "port": {
             const val = await terminal.text({
               message: "Port:",
-              defaultValue: current.port != null ? String(current.port) : "3978",
+              initialValue: current.port != null ? String(current.port) : "3978",
               validate: (v) => {
                 const trimmed = v.trim();
                 if (!trimmed) return "Required";
@@ -383,7 +383,7 @@ export function createRelayPlugin(): OpenACPPlugin {
                 if (isNaN(n) || !Number.isInteger(n) || n < 1 || n > 65535) return "Port must be 1-65535";
                 return undefined;
               },
-            });
+            } as Parameters<typeof terminal.text>[0]);
             await settings.set("port", Number(val.trim()));
             terminal.log.success(`Port set to ${val.trim()}`);
             break;

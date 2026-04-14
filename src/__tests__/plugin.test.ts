@@ -157,7 +157,7 @@ describe("createRelayPlugin", () => {
     it("has correct name and version", () => {
       const plugin = createRelayPlugin();
       expect(plugin.name).toBe("@hahnfeld/msrelay-provider");
-      expect(plugin.version).toBe("0.1.5");
+      expect(plugin.version).toBe("0.1.6");
     });
 
     it("declares required permissions", () => {
