@@ -87,9 +87,10 @@ function createMockInstallContext(opts: {
 } = {}) {
   const {
     textResponses = [
-      "myrelay.servicebus.windows.net",             // namespace
-      "bot-endpoint",                                // hybrid connection
-      "ListenOnly",                                  // SAS policy name
+      "my-resource-group",                           // resource group
+      "myrelay",                                     // namespace
+      "myrelay-hybrid",                              // hybrid connection (default from namespace)
+      "myrelay-hybrid-policy",                       // SAS policy name (default from namespace)
     ],
     passwordResponse = "dGVzdGtleQ==",
     selectResponse = "3978",
@@ -120,6 +121,7 @@ function createMockInstallContext(opts: {
       log: {
         info: vi.fn(),
         warn: vi.fn(),
+        warning: vi.fn(),
         error: vi.fn(),
         success: vi.fn(),
         step: vi.fn(),
@@ -155,7 +157,7 @@ describe("createRelayPlugin", () => {
     it("has correct name and version", () => {
       const plugin = createRelayPlugin();
       expect(plugin.name).toBe("@hahnfeld/msrelay-provider");
-      expect(plugin.version).toBe("0.1.3");
+      expect(plugin.version).toBe("0.1.5");
     });
 
     it("declares required permissions", () => {
@@ -304,9 +306,10 @@ describe("createRelayPlugin", () => {
         expect.objectContaining({
           enabled: true,
           port: 3978,
+          resourceGroup: "my-resource-group",
           relayNamespace: "myrelay.servicebus.windows.net",
-          hybridConnectionName: "bot-endpoint",
-          sasKeyName: "ListenOnly",
+          hybridConnectionName: "myrelay-hybrid",
+          sasKeyName: "myrelay-hybrid-policy",
           sasKeyValue: "dGVzdGtleQ==",
         }),
       );
@@ -323,20 +326,23 @@ describe("createRelayPlugin", () => {
       expect(ctx.settings.getAll).toHaveBeenCalled();
     });
 
-    it("shows Azure CLI commands in notes", async () => {
+    it("shows exact az CLI commands as plain text (not in note boxes)", async () => {
       const plugin = createRelayPlugin();
       const ctx = createMockInstallContext();
       await plugin.install!(ctx as never);
 
-      const noteCalls = ctx.terminal.note.mock.calls.map((c: unknown[]) => c[0] as string);
-      // Should show az relay namespace create command
-      expect(noteCalls.some((n: string) => n.includes("az relay namespace create"))).toBe(true);
-      // Should show az relay hyco create command
-      expect(noteCalls.some((n: string) => n.includes("az relay hyco create"))).toBe(true);
-      // Should show az relay hyco authorization-rule keys list command
-      expect(noteCalls.some((n: string) => n.includes("authorization-rule keys list"))).toBe(true);
-      // Should include <resource-group> placeholder in commands
-      expect(noteCalls.some((n: string) => n.includes("<resource-group>"))).toBe(true);
+      const infoCalls = ctx.terminal.log.info.mock.calls.map((c: unknown[]) => c[0] as string);
+      const allInfo = infoCalls.join("\n");
+      // Commands output as log.info (copyable), not terminal.note (boxed)
+      expect(allInfo).toContain("az relay namespace create");
+      expect(allInfo).toContain("--resource-group my-resource-group");
+      expect(allInfo).toContain("--name myrelay");
+      expect(allInfo).toContain("--name myrelay-hybrid");
+      expect(allInfo).toContain("--name myrelay-hybrid-policy");
+      expect(allInfo).toContain("authorization-rule keys list");
+      // No angle-bracket placeholders
+      expect(allInfo).not.toContain("<resource-group>");
+      expect(allInfo).not.toContain("<choose-a-name>");
     });
 
     it("runs SAS token test when confirmed", async () => {

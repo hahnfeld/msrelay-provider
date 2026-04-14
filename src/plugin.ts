@@ -94,7 +94,7 @@ export function createRelayPlugin(): OpenACPPlugin {
 
   return {
     name: "@hahnfeld/msrelay-provider",
-    version: "0.1.4",
+    version: "0.1.5",
     description: "Azure Relay Hybrid Connections tunnel provider — private HTTP tunneling via Azure backbone",
     essential: false,
     permissions: [
@@ -114,65 +114,44 @@ export function createRelayPlugin(): OpenACPPlugin {
       const existing = await settings.getAll() as Partial<AzureRelayConfig>;
 
       terminal.note(
-        "This wizard walks you through setting up Azure Relay Hybrid Connections.\n" +
-        "It exposes local ports through Azure's private backbone — no public\n" +
-        "internet exposure, no inbound ports.\n" +
+        "Azure Relay Hybrid Connections exposes a local port via a stable\n" +
+        "HTTPS endpoint on Azure's private backbone — no public internet\n" +
+        "exposure, no inbound ports required.\n" +
         "\n" +
-        "You'll need the Azure CLI installed (az). Each step shows the command\n" +
-        "to run. If you've already provisioned these resources, just enter the\n" +
-        "existing values when prompted.",
+        "This wizard collects a few names, then gives you the exact Azure\n" +
+        "CLI commands to run. You'll need the az CLI installed.",
         "Azure Relay Setup",
       );
 
-      // ── Step 1: Relay Namespace ──
+      // ── Step 1: Collect names ──
 
-      terminal.note(
-        "Create a Relay namespace (if you don't have one):\n" +
-        "\n" +
-        "  az relay namespace create \\\n" +
-        "    --resource-group <resource-group> \\\n" +
-        "    --name <choose-a-name> \\\n" +
-        "    --location westus2\n" +
-        "\n" +
-        "The namespace becomes <name>.servicebus.windows.net",
-        "Step 1: Create Relay Namespace",
-      );
+      const resourceGroup = await terminal.text({
+        message: "Azure resource group:",
+        defaultValue: existing.resourceGroup ?? undefined,
+        validate: (v) => {
+          if (!v.trim()) return "Resource group is required";
+          return undefined;
+        },
+      });
+      const rg = resourceGroup.trim();
 
       const namespaceInput = await terminal.text({
-        message: "Azure Relay namespace (e.g., myrelay or myrelay.servicebus.windows.net):",
-        defaultValue: existing.relayNamespace ?? undefined,
+        message: "Relay namespace name (becomes <name>.servicebus.windows.net):",
+        defaultValue: existing.relayNamespace?.replace(".servicebus.windows.net", "") ?? undefined,
         validate: (v) => {
           if (!v.trim()) return "Namespace is required";
           return undefined;
         },
       });
-      const ns = namespaceInput.trim().endsWith(".servicebus.windows.net")
-        ? namespaceInput.trim()
-        : `${namespaceInput.trim()}.servicebus.windows.net`;
+      const nsName = namespaceInput.trim().replace(".servicebus.windows.net", "");
+      const ns = `${nsName}.servicebus.windows.net`;
       if (!isValidNamespace(ns)) {
         terminal.log.warning(`"${ns}" doesn't look like a valid namespace — continuing anyway`);
       }
-      const nsName = ns.replace(".servicebus.windows.net", "");
-
-      // ── Step 2: Hybrid Connection ──
-
-      terminal.note(
-        "Create a Hybrid Connection with client authorization disabled:\n" +
-        "\n" +
-        `  az relay hyco create \\\n` +
-        `    --resource-group <resource-group> \\\n` +
-        `    --namespace-name ${nsName} \\\n` +
-        `    --name <choose-a-name> \\\n` +
-        `    --requires-client-authorization false\n` +
-        "\n" +
-        "IMPORTANT: --requires-client-authorization cannot be changed after\n" +
-        "creation. If you need to change it, delete and recreate the connection.",
-        "Step 2: Create Hybrid Connection",
-      );
 
       const connectionName = await terminal.text({
-        message: "Hybrid Connection name (e.g., bot-endpoint):",
-        defaultValue: existing.hybridConnectionName ?? undefined,
+        message: "Hybrid Connection name:",
+        defaultValue: existing.hybridConnectionName ?? `${nsName}-hybrid`,
         validate: (v) => {
           const trimmed = v.trim();
           if (!trimmed) return "Connection name is required";
@@ -182,25 +161,9 @@ export function createRelayPlugin(): OpenACPPlugin {
       });
       const hc = connectionName.trim();
 
-      // ── Step 3: SAS Policy ──
-
-      terminal.note(
-        "Create a listen-only SAS authorization rule:\n" +
-        "\n" +
-        `  az relay hyco authorization-rule create \\\n` +
-        `    --resource-group <resource-group> \\\n` +
-        `    --namespace-name ${nsName} \\\n` +
-        `    --hybrid-connection-name ${hc} \\\n` +
-        `    --name ListenOnly --rights Listen\n` +
-        "\n" +
-        "Use a listen-only policy — this plugin only needs Listen permission.\n" +
-        "Do not use RootManageSharedAccessKey.",
-        "Step 3: Create SAS Policy",
-      );
-
       const keyName = await terminal.text({
-        message: "SAS policy name:",
-        defaultValue: existing.sasKeyName ?? "ListenOnly",
+        message: "SAS policy name (listen-only auth rule):",
+        defaultValue: existing.sasKeyName ?? `${nsName}-hybrid-policy`,
         validate: (v) => {
           if (!v.trim()) return "Policy name is required";
           return undefined;
@@ -208,21 +171,30 @@ export function createRelayPlugin(): OpenACPPlugin {
       });
       const sasName = keyName.trim();
 
-      // ── Step 4: SAS Key ──
+      // ── Step 2: Show the public URL and exact az commands ──
 
-      terminal.note(
-        "Get the SAS key with this command:\n" +
-        "\n" +
-        `  az relay hyco authorization-rule keys list \\\n` +
-        `    --resource-group <resource-group> \\\n` +
-        `    --namespace-name ${nsName} \\\n` +
-        `    --hybrid-connection-name ${hc} \\\n` +
-        `    --name ${sasName} \\\n` +
-        `    --query primaryKey -o tsv\n` +
-        "\n" +
-        "Copy the output — that's your SAS key value.",
-        "Step 4: Get SAS Key",
-      );
+      terminal.log.step("Your public endpoint will be:");
+      terminal.log.info(`https://${ns}/${hc}/api/messages`);
+      terminal.log.info("");
+
+      terminal.log.step("Run these commands to create the Azure resources:");
+      terminal.log.info("");
+      terminal.log.info(`az relay namespace create --resource-group ${rg} --name ${nsName} --location westus2`);
+      terminal.log.info("");
+      terminal.log.info(`az relay hyco create --resource-group ${rg} --namespace-name ${nsName} --name ${hc} --requires-client-authorization false`);
+      terminal.log.info("");
+      terminal.log.info(`az relay hyco authorization-rule create --resource-group ${rg} --namespace-name ${nsName} --hybrid-connection-name ${hc} --name ${sasName} --rights Listen`);
+      terminal.log.info("");
+      terminal.log.warning("--requires-client-authorization cannot be changed after creation.");
+      terminal.log.warning("If you need to change it, delete and recreate the connection.");
+      terminal.log.info("");
+
+      // ── Step 3: SAS Key ──
+
+      terminal.log.step("Retrieve the SAS key:");
+      terminal.log.info("");
+      terminal.log.info(`az relay hyco authorization-rule keys list --resource-group ${rg} --namespace-name ${nsName} --hybrid-connection-name ${hc} --name ${sasName} --query primaryKey -o tsv`);
+      terminal.log.info("");
 
       const hasExistingKey = !!(existing.sasKeyValue);
       let keyValue = await terminal.password({
@@ -238,23 +210,12 @@ export function createRelayPlugin(): OpenACPPlugin {
         keyValue = existing.sasKeyValue!;
       }
 
-      // ── Step 6: Port ──
-
-      terminal.note(
-        "This tunnel can point to any local port. Common choices:\n" +
-        "\n" +
-        "  3978  — Teams adapter (Microsoft Bot Framework default)\n" +
-        "  21420 — OpenACP API server\n" +
-        "\n" +
-        "You can change this later with:\n" +
-        "  openacp plugin configure @hahnfeld/msrelay-provider",
-        "Step 5: Port Selection",
-      );
+      // ── Step 4: Port ──
 
       const existingPort = existing.port;
       const envPort = process.env.PORT ? Number(process.env.PORT) : null;
       const portChoice = await terminal.select({
-        message: "Which port should the tunnel expose?",
+        message: "Which local port should the tunnel forward to?",
         options: [
           ...(existingPort && existingPort !== 3978 && existingPort !== 21420
             ? [{ value: String(existingPort), label: `${existingPort} (current config)`, hint: "Previously configured" }]
@@ -286,7 +247,7 @@ export function createRelayPlugin(): OpenACPPlugin {
         port = Number(portChoice);
       }
 
-      // ── Step 7: Connectivity Test (optional) ──
+      // ── Step 5: Connectivity Test ──
 
       const wantTest = await terminal.confirm({
         message: "Test connectivity now? (connects to Azure Relay for up to 10s)",
@@ -305,16 +266,17 @@ export function createRelayPlugin(): OpenACPPlugin {
         }
       }
 
-      // ── Step 8: Save ──
+      // ── Step 6: Save ──
 
       await settings.setAll({
         enabled: true,
         port,
+        resourceGroup: rg,
         relayNamespace: ns,
         hybridConnectionName: hc,
         sasKeyName: sasName,
         sasKeyValue: keyValue.trim(),
-      } satisfies AzureRelayConfig);
+      });
 
       terminal.log.success("Azure Relay provider configured!");
       terminal.log.info("");
@@ -323,9 +285,8 @@ export function createRelayPlugin(): OpenACPPlugin {
         `Connection: ${hc}\n` +
         `SAS policy: ${sasName}\n` +
         `Port:       ${port}\n` +
-        `Public URL: https://${ns}/${hc}\n` +
         "\n" +
-        "For Azure Bot Framework, set your messaging endpoint to:\n" +
+        "Set your Bot Framework messaging endpoint to:\n" +
         `  https://${ns}/${hc}/api/messages`,
         "Configuration Summary",
       );

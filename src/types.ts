@@ -5,6 +5,8 @@ export interface AzureRelayConfig {
   enabled: boolean;
   /** Local port to forward requests to. Default: PORT env var or 3978. */
   port: number | null;
+  /** Azure resource group (saved for wizard pre-fill, not used at runtime). */
+  resourceGroup?: string;
   /** Azure Relay namespace (e.g., "myrelay.servicebus.windows.net"). */
   relayNamespace: string;
   /** Hybrid Connection name (e.g., "bot-endpoint"). */
